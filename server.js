@@ -3,9 +3,9 @@
 
 const express = require('express');
 require('dotenv').config();
-const data = require('./data/weather.json');
 
 const cors = require('cors');
+const axios = require('axios');
 
 const PORT = process.env.PORT || 3002;
 
@@ -19,14 +19,22 @@ class Forecast {
 const app = express();
 app.use(cors());
 
-app.get('/weather', (request, response, next) => {
-  let cityName = request.query.searchQuery;
-  let lat = request.query.lat;
-  let lon = request.query.lon;
+app.get('/', (request, response) => {
+  response.status(200).send('Welcome to my server');
+});
+
+app.get('/weather', async (request, response, next) => {
+
   try {
-    let cityData = data.find(city => city.city_name === cityName);
-    let groomedData = cityData.data.map(day => new Forecast(day));
-    response.status(200).send(groomedData);
+
+    let lat = request.query.lat;
+    let lon = request.query.lon;
+
+    let url = `http://api.weatherbit.io/v2.0/forecast/daily?key=${process.env.WEATHER_API_KEY}&lat=${lat}&lon=${lon}`;
+    let weatherResults = await axios.get(url);
+
+    response.status(200).send(weatherResults.data);
+
   } catch (error) {
     next(error);
   }
