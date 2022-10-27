@@ -8,7 +8,6 @@ const data = require('./data/weather.json');
 const cors = require('cors');
 
 const PORT = process.env.PORT || 3002;
-const WEATHER_API_KEY = process.env.WEATHER_API_KEY;
 
 class Forecast {
   constructor(obj) {
@@ -21,12 +20,13 @@ const app = express();
 app.use(cors());
 
 app.get('/weather', (request, response, next) => {
-
+  let cityName = request.query.searchQuery;
+  let lat = request.query.lat;
+  let lon = request.query.lon;
   try {
-    let city = request.query.city;
-    
-    let weatherData = data.find(city => city.toLowerCase() === response.data.city_name.toLowerCase())
-    response.status(200).send(weatherData);
+    let cityData = data.find(city => city.city_name === cityName);
+    let groomedData = cityData.data.map(day => new Forecast(day));
+    response.status(200).send(groomedData);
   } catch (error) {
     next(error);
   }
@@ -36,7 +36,7 @@ app.get('*', (request, response) => {
   response.status(404).send('This route does not exist');
 });
 
-app.use('*', (error, request, response, next) => {
+app.use('*', (error, request, response) => {
   response.status(500).send(error.message);
 });
 
