@@ -16,6 +16,14 @@ class Forecast {
   }
 }
 
+class Movies {
+  constructor(obj) {
+    this.title = obj.title;
+    this.overview = obj.overview;
+    this.poster = obj.post_path;
+  }
+}
+
 const app = express();
 app.use(cors());
 
@@ -33,9 +41,26 @@ app.get('/weather', async (request, response, next) => {
     let url = `http://api.weatherbit.io/v2.0/forecast/daily?key=${process.env.WEATHER_API_KEY}&lat=${lat}&lon=${lon}`;
     let weatherResults = await axios.get(url);
 
-    response.status(200).send(weatherResults.data);
+    let weatherData = weatherResults.data.data.map(day => new Forecast(day));
+
+    response.status(200).send(weatherData);
 
   } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/movies', async (request, response, next) => {
+  try {
+    let city = request.query.city_name;
+
+    let url = `https://api.themoviedb.org/3/search/movie?api_key=${process.env.MOVIE_API_KEY}&query=${city}&language=en-US&page=1&include_adult=false`;
+
+    let movieResults = await axios.get(url);
+    let movieData = movieResults.data.results.map(movie => new Movies(movie));
+    response.status(200).send(movieData);
+
+  } catch(error) {
     next(error);
   }
 });
